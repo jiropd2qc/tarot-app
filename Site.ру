@@ -1,0 +1,165 @@
+import uvicorn
+import webbrowser
+import threading
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+
+app = FastAPI(title="IDS Security Site")
+
+# Базовый CSS для всех страниц (Терминальный стиль)
+STYLE = """
+<style>
+    body { font-family: 'Courier New', Courier, monospace; background-color: #0a0a0a; color: #00ff00; margin: 0; padding: 0; }
+    .nav { background-color: #1a1a1a; padding: 15px; border-bottom: 2px solid #00ff00; text-align: center; }
+    .nav a { color: #00ff00; text-decoration: none; margin: 0 15px; font-weight: bold; font-size: 18px; text-transform: uppercase; }
+    .nav a:hover { color: #ffffff; text-shadow: 0 0 10px #00ff00; }
+    .container { max-width: 800px; margin: 40px auto; padding: 20px; background: #111; border: 1px solid #333; box-shadow: 0 0 20px rgba(0,255,0,0.2); border-radius: 8px; }
+    h1 { color: #fff; text-shadow: 0 0 5px #00ff00; border-bottom: 1px dashed #00ff00; padding-bottom: 10px; }
+    h2 { color: #00ff00; }
+    p { line-height: 1.6; font-size: 16px; color: #cccccc; }
+    ul { color: #cccccc; line-height: 1.8; }
+    .img-box { text-align: center; margin: 20px 0; }
+    .img-box img { max-width: 100%; border: 2px solid #00ff00; border-radius: 8px; box-shadow: 0 0 15px rgba(0,255,0,0.5); }
+    .warning { background: #2a0000; border-left: 5px solid #ff0000; padding: 15px; color: #ff9999; margin-top: 20px; }
+</style>
+"""
+
+NAV = """
+<div class="nav">
+    <a href="/">Головна</a>
+    <a href="/types">Види IDS</a>
+    <a href="/examples">Приклади</a>
+</div>
+"""
+
+# ==========================================
+# СТРАНИЦА 1: Главная
+# ==========================================
+PAGE_1 = f"""
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>IDS — Системи виявлення атак</title>
+    {STYLE}
+</head>
+<body>
+    {NAV}
+    <div class="container">
+        <h1>Системи виявлення атак (IDS)</h1>
+        <p><strong>IDS (Intrusion Detection System)</strong> — це програмний або апаратний засіб, призначений для виявлення несанкціонованого доступу, атак або шкідливої активності в комп'ютерній мережі чи на окремому хості.</p>
+        
+        <div class="img-box">
+            <!-- Бесплатная картинка со щитом -->
+            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=600&auto=format&fit=crop" alt="Кібербезпека">
+        </div>
+
+        <h2>Навіщо потрібен IDS?</h2>
+        <p>Уявіть, що IDS — це сигналізація у вашому будинку. Вона не зупиняє злодія, але вона голосно кричить, коли він намагається відчинити двері. Так само IDS аналізує весь трафік і повідомляє адміністратора про підозрілі дії.</p>
+        
+        <div class="warning">
+            ⚠️ <strong>Важливо:</strong> IDS лише фіксує атаку і попереджає про неї. Блокуванням займається інша система — IPS (Intrusion Prevention System).
+        </div>
+    </div>
+</body>
+</html>
+"""
+
+# ==========================================
+# СТРАНИЦА 2: Виды IDS
+# ==========================================
+PAGE_2 = f"""
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Види IDS</title>
+    {STYLE}
+</head>
+<body>
+    {NAV}
+    <div class="container">
+        <h1>Класифікація систем виявлення атак</h1>
+        <p>Системи IDS поділяються на кілька типів залежно від того, де вони встановлені та як аналізують дані.</p>
+
+        <h2>1. Мережеві системи (NIDS)</h2>
+        <p>Network Intrusion Detection System встановлюється на межі мережі (наприклад, на маршрутизаторі). Вона аналізує всі пакети, що проходять через мережу, і шукає підозрілі сигнатури (ознаки відомих атак).</p>
+
+        <h2>2. Хостові системи (HIDS)</h2>
+        <p>Host Intrusion Detection System встановлюється безпосередньо на конкретний комп'ютер або сервер. Вона слідкує за системними журналами, змінами у файлах та процесами, які запускаються на цьому конкретному пристрої.</p>
+
+        <div class="img-box">
+            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=600&auto=format&fit=crop" alt="Серверна">
+        </div>
+
+        <h2>3. Гібридні системи</h2>
+        <p>Комбінують у собі функції NIDS та HIDS для максимального рівня захисту.</p>
+    </div>
+</body>
+</html>
+"""
+
+# ==========================================
+# СТРАНИЦА 3: Примеры и методы
+# ==========================================
+PAGE_3 = f"""
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Методи виявлення</title>
+    {STYLE}
+</head>
+<body>
+    {NAV}
+    <div class="container">
+        <h1>Методи аналізу трафіку в IDS</h1>
+        <p>Як саме система розуміє, що це атака? Існує два основні методи:</p>
+
+        <h2>1. Виявлення за сигнатурами (Signature-based)</h2>
+        <p>IDS має базу даних відомих атак (як антивірус). Вона порівнює трафік із цією базою. Якщо є збіг — фіксується атака. <strong>Плюс:</strong> точність. <strong>Мінус:</strong> не бачить нових (нульових) атак.</p>
+
+        <h2>2. Виявлення аномалій (Anomaly-based)</h2>
+        <p>Система спочатку вивчає "нормальну" поведінку мережі. Якщо раптом о 3 годині ночі сервер починає передавати 100 гігабайт даних у невідому країну — це аномалія, і IDS піднімає тривогу.</p>
+
+        <div class="img-box">
+            <img src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?q=80&w=600&auto=format&fit=crop" alt="Код">
+        </div>
+
+        <h2>Популярні приклади IDS</h2>
+        <ul>
+            <li><strong>Snort</strong> — найвідоміша безкоштовна NIDS.</li>
+            <li><strong>Suricata</strong> — швидка система з відкритим кодом.</li>
+            <li><strong>Zeek (Bro)</strong> — потужний аналізатор мережевих протоколів.</li>
+        </ul>
+    </div>
+</body>
+</html>
+"""
+
+# ==========================================
+# МАРШРУТИ (Страницы сайта)
+# ==========================================
+@app.get("/", response_class=HTMLResponse)
+async def page1():
+    return PAGE_1
+
+@app.get("/types", response_class=HTMLResponse)
+async def page2():
+    return PAGE_2
+
+@app.get("/examples", response_class=HTMLResponse)
+async def page3():
+    return PAGE_3
+
+# ==========================================
+# ЗАПУСК
+# ==========================================
+def open_browser():
+    webbrowser.open("http://127.0.0.1:8000")
+
+if __name__ == "__main__":
+    print("🚀 Сайт IDS запущен!")
+    print("👉 Ссылка: http://127.0.0.1:8000")
+    threading.Timer(1.5, open_browser).start()
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
